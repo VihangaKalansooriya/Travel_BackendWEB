@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Place</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .upload-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .file-input {
+            padding: 10px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            background: #fafafa;
+            cursor: pointer;
+        }
+        .file-input:hover {
+            border-color: #999;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .uploaded-images {
+            margin-top: 30px;
+        }
+        .image-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .image-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .image-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        .image-item p {
+            padding: 5px;
+            font-size: 12px;
+            text-align: center;
+            background: #f8f9fa;
+            margin: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input[type="text"],
+        .form-group textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            background: white;
+        }
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .additional-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .additional-images input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+        }
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="header">
+            <h1>Image Upload Interface</h1>
+            <div class="user-info">
+                <button onclick="history.back()" class="logout-btn" style="background-color: #28a745; margin-right: 10px; padding: 8px 16px; font-size: 14px;">Back</button>
+            </div>
+        </div>
+        <form class="upload-form" id="uploadForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="placeName">Place Name</label>
+                    <input type="text" id="placeName" name="placeName" placeholder="Enter place name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="district">District</label>
+                    <select id="district" name="district" required>
+                        <option value="">Select District</option>
+                        <!-- Districts will be loaded here -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="placeDescription">Place Description</label>
+                <textarea id="placeDescription" name="placeDescription" placeholder="Enter place description" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="mainImage">Main Image</label>
+                <input type="file" id="mainImage" name="mainImage" accept="image/*" required>
+            </div>
+
+            <div class="form-group">
+                <label>Categories (Select multiple)</label>
+                <div id="categoryCheckboxes" class="checkbox-group">
+                    <!-- Checkboxes will be loaded here -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Additional Images (up to 4)</label>
+                <div class="additional-images">
+                    <input type="file" id="image1" name="image1" accept="image/*">
+                    <input type="file" id="image2" name="image2" accept="image/*">
+                    <input type="file" id="image3" name="image3" accept="image/*">
+                    <input type="file" id="image4" name="image4" accept="image/*">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" placeholder="Enter location details">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="text" id="latitude" name="latitude" placeholder="e.g., 6.9271">
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="text" id="longitude" name="longitude" placeholder="e.g., 79.8612">
+                </div>
+            </div>
+
+            <button type="submit" id="uploadBtn">Save Place Data</button>
+        </form>
+
+        <div id="status"></div>
+
+        <div class="uploaded-images">
+            <h2>Uploaded Images</h2>
+            <button onclick="loadImages()">Refresh Images</button>
+            <div id="imageList" class="image-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('imageInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const imageList = document.getElementById('imageList');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const placeName = document.getElementById('placeName').value.trim();
+            const district = document.getElementById('district').value;
+            const placeDescription = document.getElementById('placeDescription').value.trim();
+            const mainImage = document.getElementById('mainImage').files[0];
+
+            // Get checked categories and join with commas
+            const checkedCategories = document.querySelectorAll('input[name="categories"]:checked');
+            const selectedCategories = Array.from(checkedCategories).map(cb => cb.value);
+            const categoryString = selectedCategories.join(',');
+
+            const location = document.getElementById('location').value.trim();
+            const latitude = document.getElementById('latitude').value.trim();
+            const longitude = document.getElementById('longitude').value.trim();
+
+            // Validation
+            if (!placeName || !district || !placeDescription || !mainImage || selectedCategories.length === 0) {
+                showStatus('Please fill in all required fields and select at least one category', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('placeName', placeName);
+            formData.append('district', district);
+            formData.append('placeDescription', placeDescription);
+            formData.append('mainImage', mainImage);
+            formData.append('category', categoryString); // Comma-separated category codes
+            formData.append('location', location);
+            formData.append('latitude', latitude);
+            formData.append('longitude', longitude);
+
+            // Add additional images if selected
+            for (let i = 1; i <= 4; i++) {
+                const imgFile = document.getElementById(`image${i}`).files[0];
+                if (imgFile) {
+                    formData.append(`image${i}`, imgFile);
+                }
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch('/save-place', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus(result.message, 'success');
+                    // Clear all form fields
+                    form.reset();
+                    loadImages();
+                } else {
+                    showStatus(result.message || 'Save failed', 'error');
+                }
+            } catch (error) {
+                showStatus('Save failed: ' + error.message, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Save Place Data';
+            }
+        });
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = type;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        async function loadImages() {
+            try {
+                const response = await fetch('/images');
+                if (!response.ok) {
+                    // If no index.html in images folder, we'll get a 404, which is expected
+                    imageList.innerHTML = '<p>No images uploaded yet</p>';
+                    return;
+                }
+                // Note: This would require listing files from server
+                // For now, we'll show a placeholder
+                imageList.innerHTML = '<p>Images uploaded successfully to C:/My/Travel_First/images</p>';
+            } catch (error) {
+                imageList.innerHTML = '<p>Unable to load images</p>';
+            }
+        }
+
+        async function loadDistricts() {
+            try {
+                const response = await fetch('/api/districts');
+                const districts = await response.json();
+
+                const districtSelect = document.getElementById('district');
+                districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district.CODE;
+                    option.textContent = district.Description;
+                    districtSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load districts:', error);
+                showStatus('Failed to load districts. Please refresh the page.', 'error');
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+
+                const checkboxContainer = document.getElementById('categoryCheckboxes');
+                categories.forEach(category => {
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `category_${category.CODE}`;
+                    checkbox.name = 'categories';
+                    checkbox.value = category.CODE;
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `category_${category.CODE}`;
+                    label.textContent = category.CatName;
+
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    checkboxContainer.appendChild(checkboxDiv);
+                });
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+                showStatus('Failed to load categories. Please refresh the page.', 'error');
+            }
+        }
+
+        // Load data on page load
+        loadDistricts();
+        loadCategories();
+        loadImages();
+    </script>
+</body>
+</html>
