@@ -345,6 +345,28 @@ app.get("/manage-places", requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, "manage-places.html"));
 });
 
+// Serve customer reviews (protected)
+app.get("/customer-reviews", requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, "customer-reviews.html"));
+});
+
+// API endpoint to get customer reviews data
+app.get("/api/customer-reviews", async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        const [rows] = await connection.execute(`
+            SELECT ID, CusName, Review, CAST(STATUS AS UNSIGNED) as STATUS, CusRating
+            FROM CusReview
+            ORDER BY ID DESC
+        `);
+        connection.release();
+        res.json({ reviews: rows });
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ error: 'Failed to fetch customer reviews' });
+    }
+});
+
 // API endpoint to update place status
 app.post("/api/update-place-status", requireAuth, async (req, res) => {
     try {

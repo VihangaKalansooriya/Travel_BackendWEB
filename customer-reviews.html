@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Places</title>
+    <title>Customer Reviews</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,13 +99,6 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        .search-box select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            background: white;
-        }
         .search-box button {
             padding: 8px 16px;
             background-color: #007bff;
@@ -136,7 +129,6 @@
         tr:hover {
             background-color: #f8f9fa;
         }
-
         .actions-cell {
             width: 120px;
         }
@@ -201,31 +193,23 @@
             padding: 50px;
             color: #666;
         }
-        .status-active {
+        .rating-stars {
+            color: #ffc107;
+            font-size: 16px;
+        }
+        .status-published {
             color: #28a745;
             font-weight: bold;
         }
-        .status-inactive {
+        .status-unpublished {
             color: #dc3545;
             font-weight: bold;
-        }
-        .status-select {
-            padding: 4px 8px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 12px;
-            background: white;
-            cursor: pointer;
-        }
-        .status-select:focus {
-            outline: none;
-            border-color: #007bff;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Manage Places</h1>
+        <h1>Customer Reviews</h1>
         <div class="user-info">
             <a href="/dashboard" class="back-btn">Back to Dashboard</a>
         </div>
@@ -235,63 +219,53 @@
         <div id="error-message" class="error" style="display: none;"></div>
 
         <div id="loading" class="loading">
-            <p>Loading places data...</p>
+            <p>Loading customer reviews...</p>
         </div>
 
         <div id="content" style="display: none;">
             <div class="stats-summary">
                 <div class="stat-item">
-                    <div class="stat-number" id="total-places">-</div>
-                    <div class="stat-label">Total Places</div>
+                    <div class="stat-number" id="total-reviews">-</div>
+                    <div class="stat-label">Total Reviews</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number" id="active-places">-</div>
-                    <div class="stat-label">Active Places</div>
+                    <div class="stat-number" id="published-reviews">-</div>
+                    <div class="stat-label">Published Reviews</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number" id="favourite-places">-</div>
-                    <div class="stat-label">Favourite Places</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="inactive-places">-</div>
-                    <div class="stat-label">Inactive Places</div>
+                    <div class="stat-number" id="unpublished-reviews">-</div>
+                    <div class="stat-label">Unpublished Reviews</div>
                 </div>
             </div>
 
             <div class="table-container">
                 <div class="table-header">
-                    <h2>Places List</h2>
+                    <h2>Customer Reviews</h2>
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Search places...">
-                        <select id="districtSelect">
-                            <option value="">All Districts</option>
-                            <!-- Districts will be loaded here -->
-                        </select>
-                        <button onclick="searchPlaces()">Search</button>
+                        <input type="text" id="searchInput" placeholder="Search reviews...">
+                        <button onclick="searchReviews()">Search</button>
                         <button onclick="clearSearch()">Clear</button>
                     </div>
                 </div>
 
-                <table id="placesTable">
+                <table id="reviewsTable">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Place Name</th>
-                            <th>District</th>
-                            <th>Category</th>
-                            <th>Description</th>
+                            <th>Customer Name</th>
+                            <th>Review</th>
                             <th>Status</th>
-                            <th>Favourite</th>
+                            <th>Rating</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="placesTableBody">
+                    <tbody id="reviewsTableBody">
                         <!-- Data will be loaded here -->
                     </tbody>
                 </table>
 
                 <div id="noDataMessage" class="no-data" style="display: none;">
-                    <p>No places found.</p>
+                    <p>No customer reviews found.</p>
                 </div>
 
                 <div class="pagination" id="pagination" style="display: none;">
@@ -304,43 +278,21 @@
     </div>
 
     <script>
-        let allPlaces = [];
-        let filteredPlaces = [];
-        let districts = [];
+        let allReviews = [];
+        let filteredReviews = [];
         let currentPage = 1;
         const itemsPerPage = 10;
 
-        async function loadDistricts() {
+        async function loadReviews() {
             try {
-                const response = await fetch('/api/districts');
+                const response = await fetch('/api/customer-reviews');
                 if (!response.ok) {
-                    throw new Error('Failed to load districts');
-                }
-                const data = await response.json();
-                districts = data;
-
-                const districtSelect = document.getElementById('districtSelect');
-                districts.forEach(district => {
-                    const option = document.createElement('option');
-                    option.value = district.CODE;
-                    option.textContent = district.Description;
-                    districtSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading districts:', error);
-            }
-        }
-
-        async function loadPlaces() {
-            try {
-                const response = await fetch('/api/places');
-                if (!response.ok) {
-                    throw new Error('Failed to load places data');
+                    throw new Error('Failed to load customer reviews');
                 }
                 const data = await response.json();
 
-                allPlaces = data.places || [];
-                filteredPlaces = [...allPlaces];
+                allReviews = data.reviews || [];
+                filteredReviews = [...allReviews];
 
                 updateStats();
                 renderTable();
@@ -350,30 +302,28 @@
                 document.getElementById('content').style.display = 'block';
 
             } catch (error) {
-                console.error('Error loading places:', error);
-                document.getElementById('error-message').textContent = 'Failed to load places data. Please refresh the page.';
+                console.error('Error loading reviews:', error);
+                document.getElementById('error-message').textContent = 'Failed to load customer reviews. Please refresh the page.';
                 document.getElementById('error-message').style.display = 'block';
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
         function updateStats() {
-            const totalPlaces = allPlaces.length;
-            const activePlaces = allPlaces.filter(p => p.PLActive === 1).length;
-            const favouritePlaces = allPlaces.filter(p => p.PLFavStatus === 1).length;
-            const inactivePlaces = totalPlaces - activePlaces;
+            const totalReviews = allReviews.length;
+            const publishedReviews = allReviews.filter(r => r.STATUS === 1).length;
+            const unpublishedReviews = totalReviews - publishedReviews;
 
-            document.getElementById('total-places').textContent = totalPlaces;
-            document.getElementById('active-places').textContent = activePlaces;
-            document.getElementById('favourite-places').textContent = favouritePlaces;
-            document.getElementById('inactive-places').textContent = inactivePlaces;
+            document.getElementById('total-reviews').textContent = totalReviews;
+            document.getElementById('published-reviews').textContent = publishedReviews;
+            document.getElementById('unpublished-reviews').textContent = unpublishedReviews;
         }
 
         function renderTable() {
-            const tbody = document.getElementById('placesTableBody');
+            const tbody = document.getElementById('reviewsTableBody');
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const pageData = filteredPlaces.slice(startIndex, endIndex);
+            const pageData = filteredReviews.slice(startIndex, endIndex);
 
             if (pageData.length === 0) {
                 document.getElementById('noDataMessage').style.display = 'block';
@@ -383,36 +333,33 @@
 
             document.getElementById('noDataMessage').style.display = 'none';
 
-            tbody.innerHTML = pageData.map(place => `
+            tbody.innerHTML = pageData.map(review => `
                 <tr>
-                    <td>${place.ID}</td>
-                    <td>${place.PLName}</td>
-                    <td>${place.PLDisCode}</td>
-                    <td>${place.PLCat || 'N/A'}</td>
-                    <td>${place.PLDesc ? place.PLDesc.substring(0, 50) + (place.PLDesc.length > 50 ? '...' : '') : 'N/A'}</td>
+                    <td>${review.ID}</td>
+                    <td>${review.CusName}</td>
+                    <td>${review.Review ? review.Review.substring(0, 100) + (review.Review.length > 100 ? '...' : '') : 'N/A'}</td>
                     <td>
-                        <select onchange="toggleStatus(${place.ID}, 'active', this.value)" class="status-select">
-                            <option value="1" ${place.PLActive == 1 ? 'selected' : ''}>Active</option>
-                            <option value="0" ${place.PLActive == 0 ? 'selected' : ''}>Inactive</option>
-                        </select>
+                        <span class="${review.STATUS === 1 ? 'status-published' : 'status-unpublished'}">
+                            ${review.STATUS === 1 ? 'Published' : 'Unpublished'}
+                        </span>
                     </td>
                     <td>
-                        <select onchange="toggleStatus(${place.ID}, 'favourite', this.value)" class="status-select">
-                            <option value="1" ${place.PLFavStatus == 1 ? 'selected' : ''}>Favourite</option>
-                            <option value="0" ${place.PLFavStatus == 0 ? 'selected' : ''}>Not Favourite</option>
-                        </select>
+                        <span class="rating-stars">
+                            ${'★'.repeat(review.CusRating || 0)}${'☆'.repeat(5 - (review.CusRating || 0))}
+                        </span>
+                        <span>(${review.CusRating || 0}/5)</span>
                     </td>
                     <td class="actions-cell">
-                        <button class="action-btn view-btn" onclick="viewPlace(${place.ID})">View</button>
-                        <button class="action-btn edit-btn" onclick="editPlace(${place.ID})">Edit</button>
-                        <button class="action-btn delete-btn" onclick="deletePlace(${place.ID})">Delete</button>
+                        <button class="action-btn view-btn" onclick="viewReview(${review.ID})">View</button>
+                        <button class="action-btn edit-btn" onclick="editReview(${review.ID})">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteReview(${review.ID})">Delete</button>
                     </td>
                 </tr>
             `).join('');
         }
 
         function updatePagination() {
-            const totalPages = Math.ceil(filteredPlaces.length / itemsPerPage);
+            const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
             const pageInfo = document.getElementById('pageInfo');
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
@@ -430,7 +377,7 @@
         }
 
         function changePage(page) {
-            const totalPages = Math.ceil(filteredPlaces.length / itemsPerPage);
+            const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
             if (page < 1 || page > totalPages) return;
 
             currentPage = page;
@@ -438,20 +385,17 @@
             updatePagination();
         }
 
-        function searchPlaces() {
+        function searchReviews() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            const selectedDistrict = document.getElementById('districtSelect').value;
 
-            filteredPlaces = allPlaces.filter(place => {
-                // Text search - only place name
-                const matchesText = !searchTerm ||
-                    place.PLName.toLowerCase().includes(searchTerm);
-
-                // District filter
-                const matchesDistrict = !selectedDistrict || place.PLDisCode === selectedDistrict;
-
-                return matchesText && matchesDistrict;
-            });
+            if (!searchTerm) {
+                filteredReviews = [...allReviews];
+            } else {
+                filteredReviews = allReviews.filter(review =>
+                    review.CusName.toLowerCase().includes(searchTerm) ||
+                    review.Review?.toLowerCase().includes(searchTerm)
+                );
+            }
 
             currentPage = 1;
             renderTable();
@@ -460,108 +404,38 @@
 
         function clearSearch() {
             document.getElementById('searchInput').value = '';
-            document.getElementById('districtSelect').value = '';
-            filteredPlaces = [...allPlaces];
+            filteredReviews = [...allReviews];
             currentPage = 1;
             renderTable();
             updatePagination();
         }
 
-        function viewPlace(id) {
+        function viewReview(id) {
             // Implement view functionality
-            alert(`View place with ID: ${id}`);
+            alert(`View review with ID: ${id}`);
         }
 
-        function editPlace(id) {
+        function editReview(id) {
             // Implement edit functionality
-            alert(`Edit place with ID: ${id}`);
+            alert(`Edit review with ID: ${id}`);
         }
 
-        async function toggleStatus(id, type, value) {
-            try {
-                const response = await fetch('/api/update-place-status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        id: id,
-                        type: type,
-                        value: parseInt(value)
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to update status');
-                }
-
-                const result = await response.json();
-
-                // Update the local data
-                const placeIndex = allPlaces.findIndex(p => p.ID === id);
-                if (placeIndex !== -1) {
-                    if (type === 'active') {
-                        allPlaces[placeIndex].PLActive = parseInt(value);
-                    } else if (type === 'favourite') {
-                        allPlaces[placeIndex].PLFavStatus = parseInt(value);
-                    }
-                }
-
-                // Update stats when status changes
-                updateStats();
-
-                // Show success message
-                showMessage('Status updated successfully!', 'success');
-
-            } catch (error) {
-                console.error('Error updating status:', error);
-                showMessage('Failed to update status. Please try again.', 'error');
-
-                // Revert the select box to original value
-                loadPlaces(); // Reload to reset the UI
-            }
-        }
-
-        function showMessage(message, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = type === 'success' ? 'success-message' : 'error';
-            messageDiv.textContent = message;
-            messageDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 10px 20px;
-                border-radius: 4px;
-                color: white;
-                background-color: ${type === 'success' ? '#28a745' : '#dc3545'};
-                z-index: 1000;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            `;
-
-            document.body.appendChild(messageDiv);
-
-            setTimeout(() => {
-                document.body.removeChild(messageDiv);
-            }, 3000);
-        }
-
-        function deletePlace(id) {
-            if (confirm(`Are you sure you want to delete place with ID: ${id}?`)) {
+        function deleteReview(id) {
+            if (confirm(`Are you sure you want to delete review with ID: ${id}?`)) {
                 // Implement delete functionality
-                alert(`Delete place with ID: ${id}`);
+                alert(`Delete review with ID: ${id}`);
             }
         }
 
         // Search on Enter key
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                searchPlaces();
+                searchReviews();
             }
         });
 
         // Load data on page load
-        loadDistricts();
-        loadPlaces();
+        loadReviews();
     </script>
 </body>
 </html>
