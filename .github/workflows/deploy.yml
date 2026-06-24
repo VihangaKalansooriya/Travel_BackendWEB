@@ -21,6 +21,8 @@ jobs:
 
           script: |
             cd /root/TravelBackend
-            git pull origin main
+            git reset --hard origin/main
+            rm -rf node_modules package-lock.json
             npm install
+            npm rebuild bcrypt --build-from-source
             pm2 restart travel-backend
