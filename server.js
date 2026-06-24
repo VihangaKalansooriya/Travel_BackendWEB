@@ -7,6 +7,11 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const mysql = require("mysql2/promise");
 const sharp = require("sharp");
+const axios = require("axios");
+const FormData = require("form-data");
+const SERVER_IP = "159.198.76.251";
+const MEDIA_API_URL = `http://${SERVER_IP}:1000`;
+const APP_URL = `http://${SERVER_IP}:2000`;
 
 const app = express();
 app.use(cors());
@@ -61,22 +66,17 @@ async function initializeDatabase() {
     }
 }
 
-// 🔹 External image folder
-const IMAGE_DIR = path.resolve("C:/My/Travel_First/images");
+const TEMP_DIR = path.resolve("./temp");
 
-// Create folder if not exists
-if (!fs.existsSync(IMAGE_DIR)) {
-    fs.mkdirSync(IMAGE_DIR, { recursive: true });
+if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
-
-// Make images accessible
-app.use("/images", express.static(IMAGE_DIR));
 
 // Multer config for multiple files
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, IMAGE_DIR),
+    destination: (req, file, cb) => cb(null, TEMP_DIR),
     filename: (req, file, cb) =>
-        cb(null, Date.now() + '_' + file.fieldname + path.extname(file.originalname))
+        cb(null, Date.now() + '_' + file.originalname)
 });
 
 const upload = multer({
@@ -97,29 +97,38 @@ const uploadFields = upload.fields([
     { name: 'image4', maxCount: 1 }
 ]);
 
-// Function to convert image to webp and update path
-async function convertToWebp(file) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!['.jpg', '.jpeg', '.png'].includes(ext)) {
-        return file.filename; // No conversion needed
-    }
-
-    const originalPath = path.join(IMAGE_DIR, file.filename);
-    const webpFilename = file.filename.replace(/\.[^.]+$/, '.webp');
-    const webpPath = path.join(IMAGE_DIR, webpFilename);
-
+async function uploadToMediaAPI(file) {
     try {
-        await sharp(originalPath)
-            .webp({ quality: 80 }) // Adjust quality as needed
-            .toFile(webpPath);
+        const form = new FormData();
 
-        // Delete original file
-        fs.unlinkSync(originalPath);
+        form.append(
+            "images",
+            fs.createReadStream(file.path),
+            file.originalname
+        );
 
-        return webpFilename;
+        const response = await axios.post(
+            `${MEDIA_API_URL}/upload`,
+            form,
+            {
+                headers: form.getHeaders()
+            }
+        );
+
+        // Delete temp file
+        if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+        }
+
+        return response.data.files[0];
+
     } catch (error) {
-        console.error('Error converting image:', error);
-        return file.filename; // Return original if conversion fails
+
+        if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+        }
+
+        throw error;
     }
 }
 
@@ -189,20 +198,36 @@ app.post("/save-place", requireAuth, uploadFields, async (req, res) => {
         const uploadedBy = req.session.user.username;
 
         // Handle main image
-        let mainImageFile = req.files['mainImage'] ? req.files['mainImage'][0] : null;
+        let mainImageFile = req.files['mainImage']
+        ? req.files['mainImage'][0]
+        : null;
+
         let mainImagePath = null;
+
         if (mainImageFile) {
-            const convertedFilename = await convertToWebp(mainImageFile);
-            mainImagePath = `/images/${convertedFilename}`;
+
+            const mediaFile = await uploadToMediaAPI(mainImageFile);
+
+            mainImagePath =
+                `${MEDIA_API_URL}/images/${mediaFile.filename}`;
         }
 
         // Handle additional images - save as comma-separated string
         const additionalImages = [];
+
         for (let i = 1; i <= 4; i++) {
-            const imgFile = req.files[`image${i}`] ? req.files[`image${i}`][0] : null;
+
+            const imgFile = req.files[`image${i}`]
+                ? req.files[`image${i}`][0]
+                : null;
+
             if (imgFile) {
-                const convertedFilename = await convertToWebp(imgFile);
-                additionalImages.push(`/images/${convertedFilename}`);
+
+                const mediaFile = await uploadToMediaAPI(imgFile);
+
+                additionalImages.push(
+                    `${MEDIA_API_URL}/images/${mediaFile.filename}`
+                );
             }
         }
         const additionalImagesString = additionalImages.join(',');
@@ -416,6 +441,6 @@ app.get("/upload", requireAuth, (req, res) => {
 
 // Start server
 app.listen(2000, async () => {
-    console.log("🚀 Server running at http://localhost:2000");
+    console.log(`🚀 Server running at ${APP_URL}`);
     await initializeDatabase();
 });
