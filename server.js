@@ -441,6 +441,6 @@ app.get("/upload", requireAuth, (req, res) => {
 
 // Start server
 app.listen(2000, async () => {
-    console.log(`🚀 Server running at ${APP_URL}`);
+    console.log(`🚀 Server running at IP ${APP_URL}`);
     await initializeDatabase();
 });
